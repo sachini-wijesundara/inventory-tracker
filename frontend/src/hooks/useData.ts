@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productsApi, categoriesApi, movementsApi } from '../services/api';
-import type { Product, Category, StockMovement, InventoryStats, PaginatedResponse } from '../types';
+import type { Product, Category, StockMovement, InventoryStats, PaginatedResponse, StockTrendPoint } from '../types';
 
 // Generic fetch hook
 export function useFetch<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
@@ -54,4 +54,9 @@ export function useMovements(params?: { page?: number; limit?: number; product_i
     () => movementsApi.getAll(params),
     [params?.page, params?.limit, params?.product_id]
   );
+}
+
+// Stock trends hook
+export function useStockTrends(days = 30) {
+  return useFetch<StockTrendPoint[]>(() => movementsApi.getTrends(days), [days]);
 }

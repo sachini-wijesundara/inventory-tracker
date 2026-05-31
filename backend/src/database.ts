@@ -84,6 +84,7 @@ function initializeSchema(): void {
   }
 
   seedDefaultUser(database);
+  seedMovements(database);
 }
 
 function seedDefaultUser(database: Database.Database): void {
@@ -134,5 +135,62 @@ function seedData(database: Database.Database): void {
 
   for (const p of products) {
     insertProd.run(p.id, p.name, p.sku, p.categoryId, p.quantity, p.minQuantity, p.price, p.unit, p.status);
+  }
+
+  // Seed demo movements for chart trends
+  seedMovementsForProducts(database, products);
+}
+
+function seedMovements(database: Database.Database): void {
+  const count = database.prepare('SELECT COUNT(*) as c FROM stock_movements').get() as { c: number };
+  if (count.c > 0) return;
+
+  const products = database.prepare('SELECT id, quantity FROM products LIMIT 4').all() as { id: string; quantity: number }[];
+  if (products.length === 0) return;
+
+  const { v4: uuidv4 } = require('uuid');
+  const insert = database.prepare('INSERT INTO stock_movements (id, product_id, type, quantity, note, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+
+  const demoMovements = [
+    { productIdx: 0, type: 'in', qty: 10, daysAgo: 28, note: 'Initial restock' },
+    { productIdx: 1, type: 'in', qty: 50, daysAgo: 25, note: 'Supplier delivery' },
+    { productIdx: 0, type: 'out', qty: 5, daysAgo: 20, note: 'Sales order' },
+    { productIdx: 2, type: 'in', qty: 30, daysAgo: 18, note: 'Bulk purchase' },
+    { productIdx: 1, type: 'out', qty: 15, daysAgo: 14, note: 'Warehouse transfer' },
+    { productIdx: 3, type: 'in', qty: 100, daysAgo: 10, note: 'Restock' },
+    { productIdx: 0, type: 'out', qty: 8, daysAgo: 7, note: 'Customer order' },
+    { productIdx: 2, type: 'out', qty: 12, daysAgo: 5, note: 'Sales' },
+    { productIdx: 1, type: 'in', qty: 20, daysAgo: 3, note: 'Emergency restock' },
+    { productIdx: 3, type: 'out', qty: 25, daysAgo: 1, note: 'Distribution' },
+  ];
+
+  for (const m of demoMovements) {
+    if (!products[m.productIdx]) continue;
+    const createdAt = new Date(Date.now() - m.daysAgo * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+    insert.run(uuidv4(), products[m.productIdx].id, m.type, m.qty, m.note, createdAt);
+  }
+}
+
+function seedMovementsForProducts(database: Database.Database, products: { id: string }[]): void {
+  const { v4: uuidv4 } = require('uuid');
+  const insert = database.prepare('INSERT INTO stock_movements (id, product_id, type, quantity, note, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+
+  const demoMovements = [
+    { productIdx: 0, type: 'in', qty: 10, daysAgo: 28, note: 'Initial restock' },
+    { productIdx: 1, type: 'in', qty: 50, daysAgo: 25, note: 'Supplier delivery' },
+    { productIdx: 0, type: 'out', qty: 5, daysAgo: 20, note: 'Sales order' },
+    { productIdx: 2, type: 'in', qty: 30, daysAgo: 18, note: 'Bulk purchase' },
+    { productIdx: 1, type: 'out', qty: 15, daysAgo: 14, note: 'Warehouse transfer' },
+    { productIdx: 3, type: 'in', qty: 100, daysAgo: 10, note: 'Restock' },
+    { productIdx: 0, type: 'out', qty: 8, daysAgo: 7, note: 'Customer order' },
+    { productIdx: 2, type: 'out', qty: 12, daysAgo: 5, note: 'Sales' },
+    { productIdx: 1, type: 'in', qty: 20, daysAgo: 3, note: 'Emergency restock' },
+    { productIdx: 3, type: 'out', qty: 25, daysAgo: 1, note: 'Distribution' },
+  ];
+
+  for (const m of demoMovements) {
+    if (!products[m.productIdx]) continue;
+    const createdAt = new Date(Date.now() - m.daysAgo * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+    insert.run(uuidv4(), products[m.productIdx].id, m.type, m.qty, m.note, createdAt);
   }
 }

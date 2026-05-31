@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type {
-  Product, Category, StockMovement, InventoryStats, AuthUser,
-  PaginatedResponse, ApiResponse, ProductFormData, StockMovementFormData
+  Product, Category, StockMovement, InventoryStats, AuthUser, CsvImportResult,
+  PaginatedResponse, ApiResponse, ProductFormData, StockMovementFormData, StockTrendPoint
 } from '../types';
 
 const api = axios.create({ baseURL: '/api' });
@@ -64,6 +64,19 @@ export const productsApi = {
 
   delete: (id: string) =>
     api.delete<ApiResponse<null>>(`/products/${id}`).then(r => r.data),
+
+  exportCsv: async () => {
+    const res = await api.get('/products/export/csv', { responseType: 'blob' });
+    const url = URL.createObjectURL(res.data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  importCsv: (csv: string) =>
+    api.post<ApiResponse<CsvImportResult>>('/products/import/csv', { csv }).then(r => r.data),
 };
 
 // Categories
@@ -88,4 +101,7 @@ export const movementsApi = {
 
   create: (data: StockMovementFormData) =>
     api.post<ApiResponse<StockMovement>>('/movements', data).then(r => r.data),
+
+  getTrends: (days = 30) =>
+    api.get<ApiResponse<StockTrendPoint[]>>('/movements/trends', { params: { days } }).then(r => r.data.data),
 };

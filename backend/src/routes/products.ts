@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from '../database';
 import { CreateProductDto, UpdateProductDto, PaginationQuery, Product } from '../types';
+import { toCsv, parseCsv } from '../utils/csv';
 
 const router = Router();
 
@@ -79,6 +80,99 @@ router.get('/stats', (_req: Request, res: Response) => {
       totalCategories,
     },
   });
+});
+
+// GET /products/export/csv
+router.get('/export/csv', (_req: Request, res: Response) => {
+  const db = getDb();
+
+  const products = db.prepare(`
+    SELECT p.name, p.sku, p.description, c.name as category_name,
+           p.quantity, p.min_quantity, p.price, p.unit, p.status
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    ORDER BY p.name ASC
+  `).all() as Record<string, string | number>[];
+
+  const csv = toCsv(
+    ['name', 'sku', 'description', 'category', 'quantity', 'min_quantity', 'price', 'unit', 'status'],
+    products.map(p => [p.name, p.sku, p.description, p.category_name, p.quantity, p.min_quantity, p.price, p.unit, p.status])
+  );
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="products.csv"');
+  res.send(csv);
+});
+
+// POST /products/import/csv
+router.post('/import/csv', (req: Request, res: Response) => {
+  const db = getDb();
+  const csvText = req.body?.csv as string;
+
+  if (!csvText?.trim()) {
+    return res.status(400).json({ message: 'CSV content is required' });
+  }
+
+  const rows = parseCsv(csvText);
+  if (rows.length === 0) {
+    return res.status(400).json({ message: 'No data rows found in CSV' });
+  }
+
+  const result = { created: 0, updated: 0, skipped: 0, errors: [] as string[] };
+
+  const getCategoryId = db.prepare('SELECT id FROM categories WHERE name = ? COLLATE NOCASE');
+  const getBySku = db.prepare('SELECT id FROM products WHERE sku = ?');
+  const insert = db.prepare(`
+    INSERT INTO products (id, name, sku, description, category_id, quantity, min_quantity, price, unit, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const update = db.prepare(`
+    UPDATE products SET name=?, description=?, category_id=?, quantity=?, min_quantity=?, price=?, unit=?, status=?, updated_at=datetime('now')
+    WHERE sku=?
+  `);
+
+  db.transaction(() => {
+    rows.forEach((row, i) => {
+      const line = i + 2;
+      const name = row.name || row['product name'];
+      const sku = row.sku;
+      if (!name || !sku) {
+        result.errors.push(`Row ${line}: name and sku are required`);
+        result.skipped++;
+        return;
+      }
+
+      const categoryName = row.category || row.category_name;
+      let categoryId: string | null = null;
+      if (categoryName) {
+        const cat = getCategoryId.get(categoryName) as { id: string } | undefined;
+        if (!cat) {
+          result.errors.push(`Row ${line}: category "${categoryName}" not found`);
+          result.skipped++;
+          return;
+        }
+        categoryId = cat.id;
+      }
+
+      const quantity = Number(row.quantity) || 0;
+      const minQuantity = Number(row.min_quantity || row['min quantity']) || 0;
+      const price = Number(row.price) || 0;
+      const unit = row.unit || 'pcs';
+      const status = ['active', 'inactive', 'discontinued'].includes(row.status) ? row.status : 'active';
+      const description = row.description || null;
+
+      const existing = getBySku.get(sku) as { id: string } | undefined;
+      if (existing) {
+        update.run(name, description, categoryId, quantity, minQuantity, price, unit, status, sku);
+        result.updated++;
+      } else {
+        insert.run(uuidv4(), name, sku, description, categoryId, quantity, minQuantity, price, unit, status);
+        result.created++;
+      }
+    });
+  })();
+
+  res.json({ data: result, message: `Import complete: ${result.created} created, ${result.updated} updated` });
 });
 
 // GET /products/:id

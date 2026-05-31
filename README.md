@@ -27,12 +27,12 @@ A full-stack inventory management system built with **React + TypeScript** (fron
 
 ## Features
 
-- **Dashboard** — live stats: total products, low stock alerts, out-of-stock count, inventory value, recent movements
-- **Products** — full CRUD with search, filter by category/status, low-stock toggle, pagination
+- **Dashboard** — live stats, stock trend charts (30-day in/out), low stock alerts, recent movements
+- **Products** — full CRUD with search, filters, pagination, **CSV import/export**
 - **Categories** — manage product groupings
 - **Stock Log** — record stock IN / OUT / adjustment movements with notes; full history
-- **Responsive** — mobile-friendly sidebar navigation
-- **Type-safe** — end-to-end TypeScript with strict mode
+- **Auth** — login, forgot password, email reset link
+- **Docker** — run full stack with `docker compose up`
 
 ---
 
@@ -194,12 +194,3 @@ SQLite data persists in the `inventory-data` Docker volume.
 - **Vite proxy** — eliminates CORS issues in development
 
 ---
-
-## What Would Be Added with More Time
-
-- [ ] PostgreSQL + Prisma ORM migration
-- [ ] NestJS refactor (controllers, services, modules, guards)
-- [ ] Jest unit tests for services
-- [ ] CSV import/export
-- [ ] Charts for stock trends
-- [ ] Barcode scanner support

@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Filter, Pencil, Trash2, ArrowLeftRight, Package } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Trash2, ArrowLeftRight, Package, Download, Upload } from 'lucide-react';
 import { useProducts, useCategories } from '../hooks/useData';
 import { productsApi, movementsApi } from '../services/api';
 import { Modal, Table, Tr, Td, StockBadge, StatusBadge, SkeletonRow, Pagination, EmptyState } from '../components/ui';
 import { ProductForm } from '../components/ProductForm';
 import { StockMovementForm } from '../components/StockMovementForm';
-import type { Product, ProductFormData, StockMovementFormData } from '../types';
+import type { Product, ProductFormData, StockMovementFormData, CsvImportResult } from '../types';
 
 export function Products() {
   const [searchParams] = useSearchParams();
@@ -27,6 +27,8 @@ export function Products() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [moveProduct, setMoveProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState('');
 
   const { data, loading, refetch } = useProducts({
@@ -89,6 +91,33 @@ export function Products() {
     }
   };
 
+  const handleExport = async () => {
+    setError('');
+    try {
+      await productsApi.exportCsv();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export failed');
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImporting(true);
+    setError('');
+    try {
+      const csv = await file.text();
+      const result = await productsApi.importCsv(csv);
+      setImportResult(result.data);
+      refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
 
   return (
@@ -99,9 +128,18 @@ export function Products() {
           <h1 className="font-display font-bold text-2xl text-paper">Products</h1>
           <p className="text-ash text-sm mt-1 font-mono">{data?.total ?? 0} items total</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
-          <Plus size={14} /> Add Product
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleExport} className="btn-ghost flex items-center gap-2 text-xs">
+            <Download size={14} /> Export CSV
+          </button>
+          <label className={`btn-ghost flex items-center gap-2 text-xs cursor-pointer ${importing ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Upload size={14} /> {importing ? 'Importing…' : 'Import CSV'}
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleImport} disabled={importing} />
+          </label>
+          <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+            <Plus size={14} /> Add Product
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -235,6 +273,35 @@ export function Products() {
             <button onClick={handleDelete} className="btn-danger flex-1">Delete</button>
           </div>
         </div>
+      </Modal>
+      <Modal open={!!importResult} onClose={() => setImportResult(null)} title="Import Results">
+        {importResult && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-success/10 border border-success/20 rounded-lg p-3">
+                <p className="text-success font-display font-bold text-xl">{importResult.created}</p>
+                <p className="text-ash text-xs font-mono">Created</p>
+              </div>
+              <div className="bg-accent/10 border border-accent/20 rounded-lg p-3">
+                <p className="text-accent font-display font-bold text-xl">{importResult.updated}</p>
+                <p className="text-ash text-xs font-mono">Updated</p>
+              </div>
+              <div className="bg-warn/10 border border-warn/20 rounded-lg p-3">
+                <p className="text-warn font-display font-bold text-xl">{importResult.skipped}</p>
+                <p className="text-ash text-xs font-mono">Skipped</p>
+              </div>
+            </div>
+            {importResult.errors.length > 0 && (
+              <div className="bg-danger/10 border border-danger/20 rounded-lg p-3 max-h-40 overflow-y-auto">
+                <p className="text-danger text-xs font-semibold mb-2">Errors:</p>
+                {importResult.errors.map((err, i) => (
+                  <p key={i} className="text-ash text-xs font-mono">{err}</p>
+                ))}
+              </div>
+            )}
+            <button onClick={() => setImportResult(null)} className="btn-primary w-full">Done</button>
+          </div>
+        )}
       </Modal>
     </div>
   );

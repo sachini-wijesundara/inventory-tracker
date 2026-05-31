@@ -5,6 +5,31 @@ import { CreateStockMovementDto, Product } from '../types';
 
 const router = Router();
 
+// GET /movements/trends
+router.get('/trends', (req: Request, res: Response) => {
+  const db = getDb();
+  const days = Math.min(Number(req.query.days) || 30, 90);
+
+  const trends = db.prepare(`
+    SELECT date(created_at) as date,
+      COALESCE(SUM(CASE WHEN type = 'in' THEN quantity ELSE 0 END), 0) as stock_in,
+      COALESCE(SUM(CASE WHEN type = 'out' THEN quantity ELSE 0 END), 0) as stock_out
+    FROM stock_movements
+    WHERE created_at >= datetime('now', '-' || ? || ' days')
+    GROUP BY date(created_at)
+    ORDER BY date ASC
+  `).all(days) as { date: string; stock_in: number; stock_out: number }[];
+
+  const data = trends.map(t => ({
+    date: t.date,
+    stock_in: t.stock_in,
+    stock_out: t.stock_out,
+    net: t.stock_in - t.stock_out,
+  }));
+
+  res.json({ data });
+});
+
 // GET /movements
 router.get('/', (req: Request, res: Response) => {
   const db = getDb();

@@ -1,13 +1,15 @@
-import { Package, AlertTriangle, TrendingDown, DollarSign, Tags, ArrowRight } from 'lucide-react';
+import { Package, AlertTriangle, TrendingDown, DollarSign, Tags, ArrowRight, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useStats, useProducts, useMovements } from '../hooks/useData';
+import { useStats, useProducts, useMovements, useStockTrends } from '../hooks/useData';
 import { StatCard, Table, Tr, Td, StockBadge, SkeletonRow } from '../components/ui';
+import { StockTrendChart } from '../components/StockTrendChart';
 import { formatDistanceToNow } from 'date-fns';
 
 export function Dashboard() {
   const { data: stats, loading: statsLoading } = useStats();
   const { data: lowStock, loading: lowLoading } = useProducts({ low_stock: true, limit: 5 });
   const { data: movements } = useMovements({ limit: 5 });
+  const { data: trends, loading: trendsLoading } = useStockTrends(30);
 
   const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
@@ -34,6 +36,21 @@ export function Dashboard() {
             <StatCard label="Categories" value={stats.totalCategories} sub="product groups" to="/categories" />
           </>
         ) : null}
+      </div>
+
+      {/* Stock trends chart */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={15} className="text-accent" />
+            <h2 className="font-display font-semibold text-paper text-sm">Stock Trends</h2>
+            <span className="text-ash text-[10px] font-mono">Last 30 days</span>
+          </div>
+          <Link to="/movements" className="text-accent text-xs font-mono flex items-center gap-1 hover:underline">
+            View log <ArrowRight size={11} />
+          </Link>
+        </div>
+        <StockTrendChart data={trends ?? []} loading={trendsLoading} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

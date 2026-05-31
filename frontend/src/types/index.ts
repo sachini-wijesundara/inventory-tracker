@@ -4,6 +4,20 @@ export interface AuthUser {
   name: string;
 }
 
+export interface StockTrendPoint {
+  date: string;
+  stock_in: number;
+  stock_out: number;
+  net: number;
+}
+
+export interface CsvImportResult {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+}
+
 export interface Category {
   id: string;
   name: string;
