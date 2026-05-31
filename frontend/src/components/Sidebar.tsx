@@ -1,7 +1,8 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, Tags, ArrowLeftRight, Menu, X } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Package, Tags, ArrowLeftRight, Menu, X, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
+import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -12,6 +13,13 @@ const navItems = [
 
 export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <>
@@ -73,7 +81,18 @@ export function Sidebar() {
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-ink-muted">
-          <p className="text-ash text-[11px] font-mono">v1.0.0 • Built with NestJS + React</p>
+          {user && (
+            <div className="mb-3">
+              <p className="text-paper text-xs font-medium truncate">{user.name}</p>
+              <p className="text-ash text-[10px] font-mono truncate">{user.email}</p>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-ash text-xs hover:text-danger transition-colors w-full"
+          >
+            <LogOut size={12} /> Sign out
+          </button>
         </div>
       </aside>
     </>

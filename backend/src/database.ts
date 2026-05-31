@@ -53,9 +53,28 @@ function initializeSchema(): void {
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
     CREATE INDEX IF NOT EXISTS idx_movements_product ON stock_movements(product_id);
     CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+    CREATE INDEX IF NOT EXISTS idx_reset_tokens_user ON password_reset_tokens(user_id);
   `);
 
   // Seed categories if empty
@@ -63,6 +82,21 @@ function initializeSchema(): void {
   if (count.c === 0) {
     seedData(database);
   }
+
+  seedDefaultUser(database);
+}
+
+function seedDefaultUser(database: Database.Database): void {
+  const userCount = database.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
+  if (userCount.c > 0) return;
+
+  const bcrypt = require('bcryptjs');
+  const { v4: uuidv4 } = require('uuid');
+  const passwordHash = bcrypt.hashSync('admin123', 10);
+
+  database.prepare(
+    'INSERT INTO users (id, email, name, password_hash) VALUES (?, ?, ?, ?)'
+  ).run(uuidv4(), 'admin@stockwise.com', 'Admin', passwordHash);
 }
 
 function seedData(database: Database.Database): void {

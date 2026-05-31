@@ -1,3 +1,12 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  password_hash: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -60,6 +69,7 @@ export interface PaginationQuery {
   category_id?: string;
   status?: string;
   low_stock?: string;
+  out_of_stock?: string;
 }
 
 export interface ApiResponse<T> {

@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Filter, Pencil, Trash2, ArrowLeftRight, Package } from 'lucide-react';
 import { useProducts, useCategories } from '../hooks/useData';
 import { productsApi, movementsApi } from '../services/api';
@@ -8,11 +9,19 @@ import { StockMovementForm } from '../components/StockMovementForm';
 import type { Product, ProductFormData, StockMovementFormData } from '../types';
 
 export function Products() {
+  const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(searchParams.get('low_stock') === 'true');
+  const [outOfStockOnly, setOutOfStockOnly] = useState(searchParams.get('out_of_stock') === 'true');
+
+  useEffect(() => {
+    setLowStockOnly(searchParams.get('low_stock') === 'true');
+    setOutOfStockOnly(searchParams.get('out_of_stock') === 'true');
+    setPage(1);
+  }, [searchParams]);
 
   const [showCreate, setShowCreate] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -25,6 +34,7 @@ export function Products() {
     category_id: categoryFilter || undefined,
     status: statusFilter || undefined,
     low_stock: lowStockOnly || undefined,
+    out_of_stock: outOfStockOnly || undefined,
   });
 
   const { data: categories } = useCategories();
@@ -124,12 +134,21 @@ export function Products() {
         </select>
         <label className="flex items-center gap-2 cursor-pointer">
           <div
-            onClick={() => { setLowStockOnly(!lowStockOnly); setPage(1); }}
+            onClick={() => { setLowStockOnly(!lowStockOnly); setOutOfStockOnly(false); setPage(1); }}
             className={`w-8 h-4 rounded-full transition-colors cursor-pointer ${lowStockOnly ? 'bg-warn' : 'bg-ink-muted border border-ash-dim/40'}`}
           >
             <div className={`w-3 h-3 rounded-full bg-paper mt-0.5 transition-transform ${lowStockOnly ? 'translate-x-4' : 'translate-x-0.5'}`} />
           </div>
           <span className="text-ash text-xs font-mono">Low stock only</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <div
+            onClick={() => { setOutOfStockOnly(!outOfStockOnly); setLowStockOnly(false); setPage(1); }}
+            className={`w-8 h-4 rounded-full transition-colors cursor-pointer ${outOfStockOnly ? 'bg-danger' : 'bg-ink-muted border border-ash-dim/40'}`}
+          >
+            <div className={`w-3 h-3 rounded-full bg-paper mt-0.5 transition-transform ${outOfStockOnly ? 'translate-x-4' : 'translate-x-0.5'}`} />
+          </div>
+          <span className="text-ash text-xs font-mono">Out of stock only</span>
         </label>
       </div>
 

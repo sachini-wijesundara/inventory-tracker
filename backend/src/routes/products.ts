@@ -8,7 +8,7 @@ const router = Router();
 // GET /products
 router.get('/', (req: Request, res: Response) => {
   const db = getDb();
-  const { page = 1, limit = 10, search, category_id, status, low_stock }: PaginationQuery = req.query as PaginationQuery;
+  const { page = 1, limit = 10, search, category_id, status, low_stock, out_of_stock }: PaginationQuery = req.query as PaginationQuery;
 
   const pageNum = Number(page);
   const limitNum = Number(limit);
@@ -31,6 +31,9 @@ router.get('/', (req: Request, res: Response) => {
   }
   if (low_stock === 'true') {
     whereConditions.push('p.quantity <= p.min_quantity');
+  }
+  if (out_of_stock === 'true') {
+    whereConditions.push('p.quantity = 0');
   }
 
   const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';

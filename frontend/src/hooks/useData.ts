@@ -30,11 +30,11 @@ export function useFetch<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
 // Products hook
 export function useProducts(params?: {
   page?: number; limit?: number; search?: string;
-  category_id?: string; status?: string; low_stock?: boolean;
+  category_id?: string; status?: string; low_stock?: boolean; out_of_stock?: boolean;
 }) {
   return useFetch<PaginatedResponse<Product>>(
     () => productsApi.getAll(params),
-    [params?.page, params?.limit, params?.search, params?.category_id, params?.status, params?.low_stock]
+    [params?.page, params?.limit, params?.search, params?.category_id, params?.status, params?.low_stock, params?.out_of_stock]
   );
 }
 
