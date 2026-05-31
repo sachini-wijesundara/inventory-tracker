@@ -157,6 +157,34 @@ The database is created automatically at `data/inventory.db` with seed data on f
 
 ---
 
+## Docker
+
+Run the full stack with Docker Compose (no Node.js install required):
+
+```bash
+# Build and start (frontend on :80, backend on :3001)
+docker compose up --build -d
+
+# Or use npm script
+npm run docker:up
+```
+
+Open **http://localhost** — login with `admin@stockwise.com` / `admin123`.
+
+```bash
+# View logs
+npm run docker:logs
+
+# Stop containers
+npm run docker:down
+```
+
+Optional: copy `.env.example` to `.env` and set `JWT_SECRET`, SMTP settings, etc. Docker Compose reads `.env` automatically.
+
+SQLite data persists in the `inventory-data` Docker volume.
+
+---
+
 ## Design Decisions
 
 - **SQLite over PostgreSQL** — zero-config for local dev; trivial to swap using TypeORM/Prisma for production
@@ -169,11 +197,9 @@ The database is created automatically at `data/inventory.db` with seed data on f
 
 ## What Would Be Added with More Time
 
-- [ ] JWT authentication (login/register)
 - [ ] PostgreSQL + Prisma ORM migration
 - [ ] NestJS refactor (controllers, services, modules, guards)
 - [ ] Jest unit tests for services
-- [ ] Docker + docker-compose
 - [ ] CSV import/export
 - [ ] Charts for stock trends
 - [ ] Barcode scanner support

@@ -19,9 +19,10 @@ if (!fs.existsSync(dataDir)) {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
