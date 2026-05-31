@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 
 // Modal
@@ -21,16 +22,27 @@ export function Modal({ open, onClose, title, children }: {
 }
 
 // Stat card
-export function StatCard({ label, value, sub, accent }: {
-  label: string; value: string | number; sub?: string; accent?: boolean;
+export function StatCard({ label, value, sub, accent, to }: {
+  label: string; value: string | number; sub?: string; accent?: boolean; to?: string;
 }) {
-  return (
-    <div className={clsx('card p-5 animate-fade-up', accent && 'border-accent/30 bg-accent/5')}>
+  const content = (
+    <>
       <p className="text-ash text-xs font-display font-semibold uppercase tracking-widest mb-1">{label}</p>
       <p className={clsx('font-display font-bold text-2xl', accent ? 'text-accent' : 'text-paper')}>{value}</p>
       {sub && <p className="text-ash text-xs mt-1 font-mono">{sub}</p>}
-    </div>
+    </>
   );
+
+  const className = clsx(
+    'card p-5 animate-fade-up block',
+    accent && 'border-accent/30 bg-accent/5',
+    to && 'hover:border-accent/40 hover:bg-accent/5 transition-all cursor-pointer group'
+  );
+
+  if (to) {
+    return <Link to={to} className={className}>{content}</Link>;
+  }
+  return <div className={className}>{content}</div>;
 }
 
 // Table

@@ -1,24 +1,53 @@
 import axios from 'axios';
 import type {
-  Product, Category, StockMovement, InventoryStats,
+  Product, Category, StockMovement, InventoryStats, AuthUser,
   PaginatedResponse, ApiResponse, ProductFormData, StockMovementFormData
 } from '../types';
 
 const api = axios.create({ baseURL: '/api' });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('stockwise_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const message = err.response?.data?.message || 'An error occurred';
+    if (err.response?.status === 401 && !err.config?.url?.includes('/auth/')) {
+      localStorage.removeItem('stockwise_token');
+      localStorage.removeItem('stockwise_user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(new Error(message));
   }
 );
+
+// Auth
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post<ApiResponse<{ token: string; user: AuthUser }>>('/auth/login', { email, password })
+      .then(r => r.data.data),
+
+  me: () =>
+    api.get<ApiResponse<AuthUser>>('/auth/me').then(r => r.data.data),
+
+  forgotPassword: (email: string) =>
+    api.post<{ message: string }>('/auth/forgot-password', { email }).then(r => r.data),
+
+  resetPassword: (token: string, password: string) =>
+    api.post<{ message: string }>('/auth/reset-password', { token, password }).then(r => r.data),
+};
 
 // Products
 export const productsApi = {
   getAll: (params?: {
     page?: number; limit?: number; search?: string;
-    category_id?: string; status?: string; low_stock?: boolean;
+    category_id?: string; status?: string; low_stock?: boolean; out_of_stock?: boolean;
   }) => api.get<PaginatedResponse<Product>>('/products', { params }).then(r => r.data),
 
   getById: (id: string) =>

@@ -27,11 +27,11 @@ export function Dashboard() {
           ))
         ) : stats ? (
           <>
-            <StatCard label="Products" value={stats.totalProducts} sub="active items" accent />
-            <StatCard label="Low Stock" value={stats.lowStock} sub="need attention" />
-            <StatCard label="Out of Stock" value={stats.outOfStock} sub="zero quantity" />
-            <StatCard label="Total Value" value={fmt(stats.totalValue)} sub="inventory worth" />
-            <StatCard label="Categories" value={stats.totalCategories} sub="product groups" />
+            <StatCard label="Products" value={stats.totalProducts} sub="active items" accent to="/products" />
+            <StatCard label="Low Stock" value={stats.lowStock} sub="need attention" to="/products?low_stock=true" />
+            <StatCard label="Out of Stock" value={stats.outOfStock} sub="zero quantity" to="/products?out_of_stock=true" />
+            <StatCard label="Total Value" value={fmt(stats.totalValue)} sub="inventory worth" to="/products" />
+            <StatCard label="Categories" value={stats.totalCategories} sub="product groups" to="/categories" />
           </>
         ) : null}
       </div>

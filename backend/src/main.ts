@@ -2,9 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
+import authRouter from './routes/auth';
 import productsRouter from './routes/products';
 import categoriesRouter from './routes/categories';
 import movementsRouter from './routes/movements';
+import { authenticate } from './middleware/auth';
+
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, '../../data');
@@ -27,9 +32,10 @@ app.use((req, _res, next) => {
 });
 
 // Routes
-app.use('/api/products', productsRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/movements', movementsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/products', authenticate, productsRouter);
+app.use('/api/categories', authenticate, categoriesRouter);
+app.use('/api/movements', authenticate, movementsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
