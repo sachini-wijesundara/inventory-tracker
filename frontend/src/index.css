@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-ink text-paper font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-ink-soft;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ash-dim rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ash;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-ink-soft border border-ink-muted rounded-lg;
+  }
+
+  .btn-primary {
+    @apply bg-accent text-ink font-display font-semibold text-sm px-4 py-2 rounded
+           hover:bg-accent-soft transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply text-ash-light font-sans text-sm px-4 py-2 rounded
+           hover:bg-ink-muted hover:text-paper transition-all duration-150;
+  }
+
+  .btn-danger {
+    @apply bg-danger/10 text-danger border border-danger/20 font-sans text-sm px-4 py-2 rounded
+           hover:bg-danger/20 transition-all duration-150;
+  }
+
+  .input {
+    @apply bg-ink-muted border border-ash-dim/40 rounded text-paper text-sm px-3 py-2 w-full
+           placeholder:text-ash focus:outline-none focus:border-accent/60 transition-colors;
+  }
+
+  .label {
+    @apply text-ash-light text-xs font-display font-semibold uppercase tracking-widest mb-1.5 block;
+  }
+
+  .badge-active   { @apply bg-success/15 text-success border border-success/20 text-xs px-2 py-0.5 rounded font-mono; }
+  .badge-inactive { @apply bg-ash/15 text-ash border border-ash/20 text-xs px-2 py-0.5 rounded font-mono; }
+  .badge-discontinued { @apply bg-danger/15 text-danger border border-danger/20 text-xs px-2 py-0.5 rounded font-mono; }
+  .badge-low { @apply bg-warn/15 text-warn border border-warn/20 text-xs px-2 py-0.5 rounded font-mono; }
+  .badge-out { @apply bg-danger/15 text-danger border border-danger/20 text-xs px-2 py-0.5 rounded font-mono; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.25s ease-out both;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1E1E2A 25%, #2A2A38 50%, #1E1E2A 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
